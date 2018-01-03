@@ -30,10 +30,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity implements FragmentHome.FragmentHomeListener, FragmentRegister.FragmentRegisterListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
+public class MainActivity extends AppCompatActivity implements FragmentHome.FragmentHomeListener, FragmentWorking.FragmentWorkingListener,FragmentDirections.FragmentDirectionsListener, FragmentRegister.FragmentRegisterListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     public static String TAG = "MainActivity";
     Utils mUtils;
@@ -278,6 +280,62 @@ public class MainActivity extends AppCompatActivity implements FragmentHome.Frag
         transaction.add(R.id.main_content_frame, fragment, FragmentHome.TAG);
         transaction.addToBackStack(FragmentHome.TAG);
         transaction.commit();
+    }
+
+    @Override
+    public void onButtonShowCode() {
+        Log.d(TAG, "Showing the code to be scanned");
+        Fragment fragment = new FragmentQRCode();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.main_content_frame, fragment, FragmentQRCode.TAG);
+        transaction.addToBackStack(FragmentQRCode.TAG);
+        transaction.commit();
+    }
+
+    @Override
+    public void onReportSubmit(final String dsc, final String cst) {
+        new AsyncTask<Void, Void, JSONObject>(){
+
+            @Override
+            protected JSONObject doInBackground(Void... params) {
+                Log.d(TAG, "Starting registration");
+                HashMap<String, String> nameValuePairs = new HashMap<>();
+                JSONParser parser = new JSONParser();
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                Log.d(TAG,"The time finised is::"+timeStamp);
+                nameValuePairs.put("f_time", timeStamp);
+                nameValuePairs.put("desc", dsc);
+                nameValuePairs.put("cost", cst);
+                nameValuePairs.put("t_id", mUtils.getFromPreferences(Utils.TRANSACTION_ID));
+                Log.d(TAG, "create namevalue pairs");
+                JSONObject jsonObject = parser.makeHttpRequest(mUtils.getCurrentIPAddress() +"tatua/api/v1.0/auth/provider/submitWork", "POST",nameValuePairs);
+                return jsonObject;
+            }
+
+            @Override
+            protected void onPostExecute(JSONObject jsonObject) {
+                try {
+                    String response = jsonObject.getString("message");
+
+                    if (response.equals("Success")){
+                        Log.d(TAG, "Successfull submit report ");
+                        //show progress bar
+                        mUtils.savePreferences(Utils.PROPERTY_CURRENT_STATUS, "");
+                        //remove progress
+                        getSupportFragmentManager().popBackStack();
+                        Fragment fragment = new FragmentHome();
+                        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                        transaction.add(R.id.main_content_frame, fragment, FragmentHome.TAG);
+                        transaction.addToBackStack(FragmentHome.TAG);
+                        transaction.commit();
+                    }else if (response.equals("error")){
+                        Log.d(TAG, "Error in registration");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.execute(null, null, null);
     }
 
     /* A fragment to display an error dialog */
