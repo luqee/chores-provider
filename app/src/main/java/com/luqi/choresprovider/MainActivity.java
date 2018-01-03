@@ -33,7 +33,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity implements FragmentHome.FragmentHomeListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
+public class MainActivity extends AppCompatActivity implements FragmentHome.FragmentHomeListener, FragmentRegister.FragmentRegisterListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     public static String TAG = "MainActivity";
     Utils mUtils;
@@ -266,6 +266,18 @@ public class MainActivity extends AppCompatActivity implements FragmentHome.Frag
                 }
             }
         }.execute(null, null, null);
+    }
+
+    @Override
+    public void registrationComplete() {
+        Log.d(TAG, "Registration complete");
+        mUtils.savePreferences(Utils.REGISTRED, "True");
+        getSupportFragmentManager().popBackStack();
+        Fragment fragment = new FragmentHome();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.main_content_frame, fragment, FragmentHome.TAG);
+        transaction.addToBackStack(FragmentHome.TAG);
+        transaction.commit();
     }
 
     /* A fragment to display an error dialog */
