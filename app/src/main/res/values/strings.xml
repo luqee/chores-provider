@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">ChoresProvider</string>
+    <string-array name="categories_array">
+        <item>Plumber</item>
+        <item>Electrician</item>
+        <item>Nanny</item>
+        <item>Carpenter</item>
+        <item>Mover</item>
+        <item>Cleaner</item>
+        <item>Mechanic</item>
+        <item>Chef</item>
+        <item>Painter</item>
+        <item>Delivery</item>
+    </string-array>
 </resources>

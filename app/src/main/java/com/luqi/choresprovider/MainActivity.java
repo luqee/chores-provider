@@ -2,6 +2,8 @@ package com.luqi.choresprovider;
 
 import android.content.Context;
 import android.location.Location;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -32,6 +34,36 @@ public class MainActivity extends AppCompatActivity {
         updateValuesFromBundle(savedInstanceState);
         buildGoogleApiClient();
         createView();
+    }
+
+    private void createView(){
+        if(mUtils.getFromPreferences(Utils.REGISTRED) !="True"){
+            Fragment fragment = new FragmentRegister();
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.main_content_frame, fragment, FragmentRegister.TAG);
+            transaction.addToBackStack(FragmentRegister.TAG);
+            transaction.commit();
+        }else{
+            if(mUtils.getFromPreferences(Utils.PROPERTY_CURRENT_STATUS) =="Engaged"){
+                Fragment fragment = new FragmentDirections();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.add(R.id.main_content_frame, fragment, FragmentDirections.TAG);
+                transaction.addToBackStack(FragmentDirections.TAG);
+                transaction.commit();
+            }else if (mUtils.getFromPreferences(Utils.PROPERTY_CURRENT_STATUS) =="Working"){
+                Fragment fragment = new FragmentWorking();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.add(R.id.main_content_frame, fragment, FragmentWorking.TAG);
+                transaction.addToBackStack(FragmentWorking.TAG);
+                transaction.commit();
+            }else{
+                Fragment fragment = new FragmentHome();
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                transaction.add(R.id.main_content_frame, fragment, FragmentHome.TAG);
+                transaction.addToBackStack(FragmentHome.TAG);
+                transaction.commit();
+            }
+        }
     }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
