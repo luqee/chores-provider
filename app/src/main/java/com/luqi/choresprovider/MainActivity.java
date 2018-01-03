@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -25,10 +26,14 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
+public class MainActivity extends AppCompatActivity implements FragmentHome.FragmentHomeListener,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
     public static String TAG = "MainActivity";
     Utils mUtils;
@@ -218,6 +223,49 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         mUtils.savePreferences(Utils.USER_LATITUDE, String.valueOf(location.getLatitude()));
         mUtils.savePreferences(Utils.USER_LONGITUDE, String.valueOf(location.getLongitude()));
+    }
+
+    @Override
+    public void onSetStatus(String status) {
+        if (mUtils.getFromPreferences(Utils.PROPERTY_CURRENT_STATUS) != status){
+            setStatus(status);
+        }
+    }
+
+    public void setStatus(final String status){
+        new AsyncTask<Void, Void, JSONObject>(){
+
+            @Override
+            protected JSONObject doInBackground(Void... params) {
+                Log.d(TAG, "In do in background, setting status::"+ status);
+                HashMap<String, String> nameValuePairs = new HashMap<>();
+                JSONParser parser = new JSONParser();
+                nameValuePairs.put("user_id", mUtils.getFromPreferences(Utils.USER_ID));
+                nameValuePairs.put("status", status);
+
+                Log.d(TAG, "create namevalue pairs");
+                JSONObject jsonObject = parser.makeHttpRequest(mUtils.getCurrentIPAddress() +"tatua/api/v1.0/auth/provider/changeStatus", "POST",nameValuePairs);
+                return jsonObject;
+            }
+
+            @Override
+            protected void onPostExecute(JSONObject jsonObject) {
+                try {
+                    String response = jsonObject.getString("message");
+
+                    if (response.equals("Success")){
+                        Log.d(TAG, "Successfull update ; ; "+jsonObject.getString("current_status"));
+                        //show progress bar
+                        mUtils.savePreferences(Utils.PROPERTY_CURRENT_STATUS, jsonObject.getString("current_status"));
+                        //remove progress
+                    }else if (response.equals("error")){
+                        Log.d(TAG, "Error in registration");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.execute(null, null, null);
     }
 
     /* A fragment to display an error dialog */
